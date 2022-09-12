@@ -2,6 +2,7 @@
 
 #include "camera.h"
 #include "core.h"
+#include "glm/exponential.hpp"
 #include "glm/fwd.hpp"
 #include "glm/geometric.hpp"
 #include "image.h"
@@ -31,6 +32,9 @@ int main()
   const auto sphere2 =
       std::make_shared<Sphere>(glm::vec3(0.f, 0.f, -glm::sqrt(3)), 1.f);
   const auto floor = std::make_shared<Sphere>(glm::vec3(0, -10001, 0), 10000);
+  const auto tri =
+      std::make_shared<Triangle>(glm::vec3(-1, -1, 0), glm::vec3(1, -1, 0),
+                                 glm::vec3(0, glm::sqrt(3) - 1, 0));
 
   // Material
   const auto blue = std::make_shared<Material>(glm::vec3(0.2f, 0.2f, 0.5f),
@@ -46,12 +50,14 @@ int main()
   const auto sphere0_primitive = std::make_shared<Primitive>(sphere0, blue);
   const auto sphere1_primitive = std::make_shared<Primitive>(sphere1, red);
   const auto sphere2_primitive = std::make_shared<Primitive>(sphere2, yellow);
+  const auto tri_primitive = std::make_shared<Primitive>(tri, yellow);
   const auto floor_primitive = std::make_shared<Primitive>(floor, white);
 
   std::vector<std::shared_ptr<Primitive>> primitives;
-  primitives.push_back(sphere0_primitive);
-  primitives.push_back(sphere1_primitive);
-  primitives.push_back(sphere2_primitive);
+  // primitives.push_back(sphere0_primitive);
+  // primitives.push_back(sphere1_primitive);
+  // primitives.push_back(sphere2_primitive);
+  primitives.push_back(tri_primitive);
   primitives.push_back(floor_primitive);
 
   LinearIntersector intersector(primitives);
