@@ -8,59 +8,73 @@
 #include "image.h"
 #include "intersector.h"
 #include "io.h"
+#include "obj.h"
 #include "primitive.h"
 #include "sampler.h"
 #include "shape.h"
+#include "tiny_obj_loader.h"
 
 #define RAY_EPS (0.001f)
+#define TINYOBJLOADER_IMPLEMENTATION
 
 int main()
 {
+  std::string input_obj_file_path = "./CornellBox-Original.obj";
+  auto obj_tri_mtl = load_obj(input_obj_file_path);
+
   // image size
   const int WIDTH = 512;
   const int HEIGHT = 512;
 
   // settings
   Image image(WIDTH, HEIGHT);
-  Camera camera(glm::vec3(0, 0, 3), glm::vec3(0, 0, -1));
+  Camera camera(glm::vec3(0, 1, 3), glm::vec3(0, 0, -1));
   glm::vec3 sun_direction = glm::normalize(glm::vec3(1.f, 1.f, 1.f));
   Sampler sampler(0);
 
   // Shape
-  const auto sphere0 = std::make_shared<Sphere>(glm::vec3(-1.f, 0.f, 0.f), 1.f);
-  const auto sphere1 = std::make_shared<Sphere>(glm::vec3(1.f, 0.f, 0.f), 1.f);
-  const auto sphere2 =
-      std::make_shared<Sphere>(glm::vec3(0.f, 0.f, -glm::sqrt(3)), 1.f);
-  const auto floor = std::make_shared<Sphere>(glm::vec3(0, -10001, 0), 10000);
-  const auto tri =
-      std::make_shared<Triangle>(glm::vec3(-1, -1, 0), glm::vec3(1, -1, 0),
-                                 glm::vec3(0, glm::sqrt(3) - 1, 0));
+  // const auto sphere0 =
+  //     std::make_shared<Sphere>(glm::vec3(-1.f, 0.f, -glm::sqrt(3)), 1.f);
+  // const auto sphere1 =
+  //     std::make_shared<Sphere>(glm::vec3(1.f, 0.f, -glm::sqrt(3)), 1.f);
+  // const auto sphere2 = std::make_shared<Sphere>(glm::vec3(0.f, 0.f,
+  // 0.f), 1.f); const auto floor = std::make_shared<Sphere>(glm::vec3(0,
+  // -10001, 0), 10000); const auto tri =
+  // std::make_shared<Triangle>(glm::vec3(-1, -1, 0), glm::vec3(1, -1, 0),
+  // glm::vec3(0, glm::sqrt(3) - 1, 0));
 
   // Material
-  const auto blue = std::make_shared<Material>(glm::vec3(0.2f, 0.2f, 0.5f),
-                                               glm::vec3(0.5f), 0.01f);
-  const auto red = std::make_shared<Material>(glm::vec3(0.5f, 0.2f, 0.2f),
-                                              glm::vec3(1.f), 0.01f);
-  const auto yellow = std::make_shared<Material>(glm::vec3(0.5f, 0.5f, 0.2f),
-                                                 glm::vec3(1.f), 0.01f);
-  const auto white = std::make_shared<Material>(glm::vec3(0.8f, 0.8f, 0.8f),
-                                                glm::vec3(0), 0.01f);
+  // const auto blue = std::make_shared<Material>(glm::vec3(0.2f, 0.2f, 0.5f),
+  //                                              glm::vec3(0.5f), 0.01f);
+  // const auto red = std::make_shared<Material>(glm::vec3(0.5f, 0.2f, 0.2f),
+  //                                             glm::vec3(1.f), 0.01f);
+  // const auto yellow = std::make_shared<Material>(glm::vec3(0.5f, 0.5f, 0.2f),
+  //                                                glm::vec3(1.f), 0.01f);
+  // const auto white = std::make_shared<Material>(glm::vec3(0.8f, 0.8f, 0.8f),
+  //                                               glm::vec3(0), 0.01f);
 
   // Primitive
-  const auto sphere0_primitive = std::make_shared<Primitive>(sphere0, blue);
-  const auto sphere1_primitive = std::make_shared<Primitive>(sphere1, red);
-  const auto sphere2_primitive = std::make_shared<Primitive>(sphere2, yellow);
-  const auto tri_primitive = std::make_shared<Primitive>(tri, yellow);
-  const auto floor_primitive = std::make_shared<Primitive>(floor, white);
+  // const auto sphere0_primitive = std::make_shared<Primitive>(sphere0, blue);
+  // const auto sphere1_primitive = std::make_shared<Primitive>(sphere1, red);
+  // const auto sphere2_primitive = std::make_shared<Primitive>(sphere2,
+  // yellow); const auto tri_primitive = std::make_shared<Primitive>(tri,
+  // yellow); const auto floor_primitive = std::make_shared<Primitive>(floor,
+  // white);
 
-  std::vector<std::shared_ptr<Primitive>> primitives;
+  std::vector<std::shared_ptr<Primitive>> obj_primitives;
+  for (int i = 0; i < obj_tri_mtl.first.size(); i++) {
+    obj_primitives.push_back(std::make_shared<Primitive>(
+        obj_tri_mtl.first[i], obj_tri_mtl.second[i]));
+  }
+
+  // std::vector<std::shared_ptr<Primitive>> primitives;
   // primitives.push_back(sphere0_primitive);
   // primitives.push_back(sphere1_primitive);
   // primitives.push_back(sphere2_primitive);
-  primitives.push_back(tri_primitive);
-  primitives.push_back(floor_primitive);
+  // primitives.push_back(tri_primitive);
+  // primitives.push_back(floor_primitive);
 
-  LinearIntersector intersector(primitives);
+  LinearIntersector intersector(obj_primitives);
 
 // calculate pixel color for all pixels
 #pragma omp parallel for collapse(2)
@@ -96,6 +110,7 @@ int main()
           glm::vec3 color = lambert_color + phong_color;
 
           image.addPixel(i, j, color * shadow);
+          // image.addPixel(i, j, 0.5f * (info.normal + 1.f));
         } else {
           image.addPixel(i, j, glm::vec3(0));
         }

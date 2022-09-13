@@ -18,8 +18,9 @@ class Shape
 class Triangle : public Shape
 {
  public:
-  Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2)
-      : m_v0(v0), m_v1(v1), m_v2(v2)
+  Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2,
+           const glm::vec3 n0, const glm::vec3 n1, const glm::vec3 n2)
+      : m_v0(v0), m_v1(v1), m_v2(v2), m_n0(n0), m_n1(n1), m_n2(n2)
   {
   }
 
@@ -46,15 +47,21 @@ class Triangle : public Shape
     if (t < 0.f) { return false; }
 
     info.position = (1 - u - v) * m_v0 + u * m_v1 + v * m_v2;
-    info.normal = glm::normalize(glm::cross(e1, e2));
+    // info.normal = glm::normalize(glm::cross(e1, e2));
+    info.normal = (1 - u - v) * m_n0 + u * m_n1 + v * m_n2;
     info.t = t;
     return true;
   }
 
  private:
+  // vertices
   glm::vec3 m_v0;
   glm::vec3 m_v1;
   glm::vec3 m_v2;
+  // normal per vertices
+  glm::vec3 m_n0;
+  glm::vec3 m_n1;
+  glm::vec3 m_n2;
 };
 
 class Sphere : public Shape
