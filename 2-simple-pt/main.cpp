@@ -6,33 +6,44 @@
 #include "image.h"
 #include "intersector.h"
 #include "io.h"
+#include "obj.h"
 #include "primitive.h"
 #include "sampler.h"
+#include "tiny_obj_loader.h"
 
 #define RAY_EPS 0.01f
 
 int main()
 {
+  std::string input_obj_file_path = "./data/CornellBox/CornellBox-Original.obj";
+  auto obj_tri_mtl = load_obj(input_obj_file_path);
+
   const int width = 512;
   const int height = 512;
-  const int n_samples = 100;
+  const int n_samples = 10000;
 
   Image image(width, height);
-  Camera camera(glm::vec3(0, 0, 3), glm::vec3(0, 0, -1));
+  Camera camera(glm::vec3(0, 1, 3), glm::vec3(0, 0, -1));
 
-  const auto sphere = std::make_shared<Sphere>(glm::vec3(0), 1.0f);
-  const auto floor =
-      std::make_shared<Sphere>(glm::vec3(0, -10001, 0), 10000.0f);
-  const auto white = std::make_shared<Material>(
-      glm::vec3(0.8f), glm::vec3(0.0f), glm::vec3(0.f), 1.0f);
-  const auto green = std::make_shared<Material>(
-      glm::vec3(0.2f, 0.8f, 0.2f), glm::vec3(0.8f), glm::vec3(0.f), 0.01f);
+  // const auto sphere = std::make_shared<Sphere>(glm::vec3(0), 1.0f);
+  // const auto floor =
+  //     std::make_shared<Sphere>(glm::vec3(0, -10001, 0), 10000.0f);
+  // const auto white = std::make_shared<Material>(
+  //     glm::vec3(0.8f), glm::vec3(0.0f), glm::vec3(0.f), 1.0f);
+  // const auto green = std::make_shared<Material>(
+  //     glm::vec3(0.2f, 0.8f, 0.2f), glm::vec3(0.8f), glm::vec3(0.f), 0.01f);
 
-  std::vector<std::shared_ptr<Primitive>> primitives;
-  primitives.push_back(std::make_shared<Primitive>(sphere, green));
-  primitives.push_back(std::make_shared<Primitive>(floor, white));
+  // std::vector<std::shared_ptr<Primitive>> primitives;
+  // primitives.push_back(std::make_shared<Primitive>(sphere, green));
+  // primitives.push_back(std::make_shared<Primitive>(floor, white));
 
-  LinearIntersector intersector(primitives);
+  std::vector<std::shared_ptr<Primitive>> obj_primitives;
+  for (int i = 0; i < obj_tri_mtl.first.size(); i++) {
+    obj_primitives.push_back(std::make_shared<Primitive>(
+        obj_tri_mtl.first[i], obj_tri_mtl.second[i]));
+  }
+
+  LinearIntersector intersector(obj_primitives);
 
   Sampler sampler(12);
 
@@ -75,7 +86,7 @@ int main()
           image.addPixel(i, j, color);
         } else {
           // ray doesn't hit anything
-          image.addPixel(i, j, glm::vec3(0.0f));
+          image.addPixel(i, j, glm::vec3(1.0f));
         }
       }
     }

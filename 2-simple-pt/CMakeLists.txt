@@ -1,5 +1,5 @@
 # main
-add_executable(2-simple-pt-main "main.cpp")
+add_executable(2-simple-pt-main "main.cpp" "obj.cpp")
 set_target_properties(2-simple-pt-main PROPERTIES OUTPUT_NAME "main")
 target_include_directories(2-simple-pt-main PUBLIC "include/")
 target_link_libraries(2-simple-pt-main PUBLIC
@@ -8,6 +8,7 @@ target_link_libraries(2-simple-pt-main PUBLIC
     stb_image
     stb_image_write
     OpenMP::OpenMP_CXX
+    tinyobjloader
 )
 
 # reference

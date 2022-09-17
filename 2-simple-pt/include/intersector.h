@@ -24,16 +24,19 @@ class LinearIntersector : public Intersector
 
   bool intersect(const Ray& ray, IntersectInfo& info) const override
   {
-    bool hit = false;
-    float ray_tmax = ray.tmax;
-    for (const auto& primitive : m_primitives) {
-      if (primitive->intersect(ray, info)) {
-        ray.tmax = info.t;
-        hit = true;
+    // TODO: implement this
+    IntersectInfo tmp;
+    float tmax = ray.tmax;
+    bool is_hit = false;
+
+    for (int i = 0; i < m_primitives.size(); i++) {
+      if (m_primitives[i]->intersect(ray, tmp) && tmp.t < tmax) {
+        info = tmp;
+        tmax = tmp.t;
+        is_hit = true;
       }
     }
-    ray.tmax = ray_tmax;
-    return hit;
+    return is_hit;
   }
 
  private:
