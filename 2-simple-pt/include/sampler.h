@@ -5,6 +5,7 @@
 
 #include "core.h"
 #include "glm/glm.hpp"
+#include "glm/trigonometric.hpp"
 
 // *Really* minimal PCG32 code / (c) 2014 M.E. O'Neill / pcg-random.org
 // Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
@@ -50,6 +51,10 @@ class Sampler
 inline glm::vec3 sample_hemisphere(const glm::vec2& u)
 {
   // TODO: implement this
+  float theta = glm::acos(1 - u.x);
+  float phi = 2 * M_PI * u.y;
+
+  return spherical_to_cartesian(phi, theta);
 }
 
 // cosine weighted hemisphere sampling
