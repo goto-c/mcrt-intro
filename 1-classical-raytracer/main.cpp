@@ -19,7 +19,10 @@
 
 int main()
 {
-  std::string input_obj_file_path = "./CornellBox-Original.obj";
+  // std::string input_obj_file_path = "./CornellBox-Original.obj";
+  // std::string input_obj_file_path = "./input/head/head.OBJ";
+  std::string input_obj_file_path =
+      "/home/chihiro/Desktop/mcrt-intro/build/input/head/head.OBJ";
   auto obj_tri_mtl = load_obj(input_obj_file_path);
 
   // image size
@@ -28,8 +31,8 @@ int main()
 
   // settings
   Image image(WIDTH, HEIGHT);
-  Camera camera(glm::vec3(0, 1, 3), glm::vec3(0, 0, -1));
-  glm::vec3 sun_direction = glm::normalize(glm::vec3(1.f, 1.f, 1.f));
+  Camera camera(glm::vec3(0, 0, 0.3), glm::vec3(0, 0, -1));
+  glm::vec3 sun_direction = glm::normalize(glm::vec3(-1.f, 1.f, 1.f));
   Sampler sampler(0);
 
   // Shape
@@ -109,8 +112,8 @@ int main()
 
           glm::vec3 color = lambert_color + phong_color;
 
-          image.addPixel(i, j, color * shadow);
-          // image.addPixel(i, j, 0.5f * (info.normal + 1.f));
+          // image.addPixel(i, j, color * shadow);
+          image.addPixel(i, j, 0.5f * (info.normal + 1.f));
         } else {
           image.addPixel(i, j, glm::vec3(0));
         }

@@ -21,7 +21,7 @@ load_obj(std::string inputfile)
       ret;
 
   tinyobj::ObjReaderConfig reader_config;
-  reader_config.mtl_search_path = "./";
+  reader_config.mtl_search_path = "./input/head/";
 
   tinyobj::ObjReader reader;
 
@@ -53,6 +53,7 @@ load_obj(std::string inputfile)
 
       // Loop over vertices in the face.
       bool has_normal = false;
+      bool has_tex = false;
       for (size_t v = 0; v < fv; v++) {
         // access to vertex
         tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
@@ -75,6 +76,7 @@ load_obj(std::string inputfile)
         // Check if `texcoord_index` is zero or positive. negative = no texcoord
         // data
         if (idx.texcoord_index >= 0) {
+          has_tex = true;
           tinyobj::real_t tx =
               attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
           tinyobj::real_t ty =
