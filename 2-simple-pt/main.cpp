@@ -7,6 +7,7 @@
 #include "core.h"
 #include "glm/fwd.hpp"
 #include "image.h"
+#include "integrator.h"
 #include "intersector.h"
 #include "io.h"
 #include "obj.h"
@@ -29,7 +30,7 @@ int main()
 
   const int width = 512;
   const int height = 512;
-  const int n_samples = 100;
+  const int n_samples = 10000;
   spdlog::info("[Main] Sample: {}", n_samples);
 
   Image image(width, height);
@@ -56,6 +57,7 @@ int main()
   LinearIntersector intersector(obj_primitives);
 
   Sampler sampler(12);
+  PathTracing integrator(10);
 
   glm::vec3 sun_direction = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
 
@@ -71,39 +73,12 @@ int main()
         // sample ray from camera
         const Ray ray = camera.sampleRay(ndc);
 
-        IntersectInfo info;
-        if (intersector.intersect(ray, info)) {
-          // const glm::vec3 wi = sun_direction;
-          // const glm::vec3 wo = -ray.direction;
-          // const glm::vec3 wh = glm::normalize(wo + wi);
-
-          glm::vec3 wi_local = sample_hemisphere(sampler.next_2d());
-          // glm::vec3 wi_local =
-          // sample_cosine_weighted_hemisphere(sampler.next_2d());
-
-          glm::vec3 tangent, bitangent;
-          orthonormal_basis(info.normal, tangent, bitangent);
-          glm::vec3 wi_global =
-              local_to_world(wi_local, tangent, info.normal, bitangent);
-          Ray shadow_ray(info.position + info.normal * RAY_EPS, wi_global);
-          IntersectInfo shadow_info;
-          float le = 0.f;
-          if (!intersector.intersect(shadow_ray, shadow_info)) { le = 1.f; }
-          // glm::vec3 f = glm::vec3(1.f / M_PI);
-          glm::vec3 f = info.primitive->material->kd / M_PIf;
-          float cos = glm::dot(wi_global, info.normal);
-          float pdf = 1.f / (2 * M_PI);
-          // float pdf = cos / M_PI;
-
-          glm::vec3 color = f * le * cos / pdf;
-          image.addPixel(i, j, color);
-        } else {
-          // ray doesn't hit anything
-          image.addPixel(i, j, glm::vec3(1.0f));
-        }
+        glm::vec3 color = integrator.integrate(ray, &intersector, sampler);
+        image.addPixel(i, j, color);
       }
     }
   }
+
   image.divide(n_samples);
 
   image.post_process();
