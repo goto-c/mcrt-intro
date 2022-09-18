@@ -78,6 +78,8 @@ int main()
           // const glm::vec3 wh = glm::normalize(wo + wi);
 
           glm::vec3 wi_local = sample_hemisphere(sampler.next_2d());
+          // glm::vec3 wi_local =
+          // sample_cosine_weighted_hemisphere(sampler.next_2d());
 
           glm::vec3 tangent, bitangent;
           orthonormal_basis(info.normal, tangent, bitangent);
@@ -91,6 +93,7 @@ int main()
           glm::vec3 f = info.primitive->material->kd / M_PIf;
           float cos = glm::dot(wi_global, info.normal);
           float pdf = 1.f / (2 * M_PI);
+          // float pdf = cos / M_PI;
 
           glm::vec3 color = f * le * cos / pdf;
           image.addPixel(i, j, color);

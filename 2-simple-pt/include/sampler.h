@@ -61,4 +61,8 @@ inline glm::vec3 sample_hemisphere(const glm::vec2& u)
 inline glm::vec3 sample_cosine_weighted_hemisphere(const glm::vec2& u)
 {
   // TODO: implement this
+  float theta = (1.f / 2.f) * glm::acos(1 - 2 * u.x);
+  float phi = 2 * M_PIf * u.y;
+
+  return spherical_to_cartesian(phi, theta);
 }
