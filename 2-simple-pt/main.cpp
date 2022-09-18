@@ -1,3 +1,6 @@
+#include <bits/types/time_t.h>
+#include <time.h>
+
 #include <memory>
 
 #include "camera.h"
@@ -9,18 +12,25 @@
 #include "obj.h"
 #include "primitive.h"
 #include "sampler.h"
+#include "spdlog/common.h"
+#include "spdlog/spdlog.h"
 #include "tiny_obj_loader.h"
 
 #define RAY_EPS 0.01f
 
 int main()
 {
+  time_t t_begin;
+  time(&t_begin);
+
   std::string input_obj_file_path = "./data/CornellBox/CornellBox-Original.obj";
+  // std::string input_obj_file_path = "./data/head/head.OBJ";
   auto obj_tri_mtl = load_obj(input_obj_file_path);
 
   const int width = 512;
   const int height = 512;
-  const int n_samples = 10000;
+  const int n_samples = 100;
+  spdlog::info("[Main] Sample: {}", n_samples);
 
   Image image(width, height);
   Camera camera(glm::vec3(0, 1, 3), glm::vec3(0, 0, -1));
@@ -95,6 +105,11 @@ int main()
 
   image.post_process();
   write_png("output.png", width, height, image.getConstPtr());
+
+  time_t t_end;
+  time(&t_end);
+
+  spdlog::info("[Main] Time: {} [s]", t_end - t_begin);
 
   return 0;
 }
