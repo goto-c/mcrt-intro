@@ -73,9 +73,9 @@ int main()
 
         IntersectInfo info;
         if (intersector.intersect(ray, info)) {
-          const glm::vec3 wi = sun_direction;
-          const glm::vec3 wo = -ray.direction;
-          const glm::vec3 wh = glm::normalize(wo + wi);
+          // const glm::vec3 wi = sun_direction;
+          // const glm::vec3 wo = -ray.direction;
+          // const glm::vec3 wh = glm::normalize(wo + wi);
 
           glm::vec3 wi_local = sample_hemisphere(sampler.next_2d());
 
