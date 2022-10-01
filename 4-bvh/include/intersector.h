@@ -9,6 +9,7 @@
 #include "aabb.h"
 #include "core.h"
 #include "primitive.h"
+#include "spdlog/common.h"
 
 class Intersector
 {
@@ -134,7 +135,64 @@ class BVH : public Intersector
   BVHNode* buildBVHNode(int primitive_start, int primitive_end)
   {
     // TODO: implement this
-    throw std::runtime_error("not implemented");
+    BVHNode* node = new BVHNode;
+
+    // calculate AABB
+    AABB bbox;
+    for (int i = primitive_start; i < primitive_end; ++i) {
+      bbox = bbox.mergeAABB(m_primitives[i].getBounds());
+    }
+
+    const int n_primitives = primitive_end - primitive_start;
+    if (n_primitives < m_n_primitives_in_leaf_node) {
+      return createLeafNode(node, bbox, primitive_start, n_primitives);
+    }
+
+    // calculate split AABB
+    AABB split_bbox;
+    for (int i = primitive_start; i < primitive_end; ++i) {
+      split_bbox = split_bbox.mergeAABB(m_primitives[i].getBounds().center());
+    }
+
+    // split axis
+    const int split_axis = split_bbox.logestAxis();
+
+    // split position
+    const float split_pos = split_bbox.center()[split_axis];
+
+    // split bounding box
+    const int split_idx = primitive_start + n_primitives / 2;
+    std::nth_element(m_primitives + primitive_start, m_primitives + split_idx,
+                     m_primitives + primitive_end,
+                     [&](const auto& prim1, const auto& prim2) {
+                       return prim1.getBounds().center()[split_axis] <
+                              prim2.getBounds().center()[split_axis];
+                     });
+
+    // if splitting failed, create leaf node
+    if (split_idx == primitive_start || split_idx == primitive_end) {
+      spdlog::info("[BVH] splitting failed");
+      spdlog::info("[BVH] n_primitives: {}", n_primitives);
+      spdlog::info("[BVH] split_axis: {}", split_axis);
+      spdlog::info("[BVH] split_pos: {}", split_pos);
+      spdlog::info("[BVH] primitive_start: {}", primitive_start);
+      spdlog::info("[BVH] split_idx: {}", split_idx);
+      spdlog::info("[BVH] primitive_end: {}", primitive_end);
+      return createLeafNode(node, bbox, primitive_start, n_primitives);
+    }
+
+    node->bbox = bbox;
+    node->primitive_indices_offset = primitive_start;
+    node->axis = split_axis;
+
+    // build left child nodes
+    node->children[0] = buildBVHNode(primitive_start, split_idx);
+    // build right child nodes
+    node->children[1] = buildBVHNode(split_idx, primitive_end);
+
+    m_stats.n_internal_nodes++;
+
+    return node;
   }
 
   // delete bvh nodes recursively
@@ -151,6 +209,30 @@ class BVH : public Intersector
                      IntersectInfo& info) const
   {
     // TODO: implement this
-    throw std::runtime_error("not implemented");
+    bool hit = false;
+
+    info.bvh_depth++;
+
+    // intersect with bounding box
+    if (node->bbox.intersect(ray, dir_inv, dir_inv_sign)) {
+      if (node->children[0] == nullptr && node->children[1] == nullptr) {
+        // when leaf node, intersect with primitives
+        const int primitive_end =
+            node->primitive_indices_offset + node->n_primitives;
+        for (int i = node->primitive_indices_offset; i < primitive_end; i++) {
+          if (m_primitives[i].intersect(ray, info)) {
+            hit = true;
+            ray.tmax = info.t;
+          }
+        }
+      } else {
+        // intersect with child nodes
+        hit |= intersectNode(node->children[dir_inv_sign[node->axis]], ray,
+                             dir_inv, dir_inv_sign, info);
+        hit |= intersectNode(node->children[1 - dir_inv_sign[node->axis]], ray,
+                             dir_inv, dir_inv_sign, info);
+      }
+    }
+    return hit;
   }
 };
