@@ -69,7 +69,7 @@ class PathTracing : public Integrator
         ray.direction = local_to_world(wi, tangent, info.normal, bitangent);
         ray.origin = info.position + RAY_EPS * info.normal;
       } else {
-        radiance += throughput * glm::vec3(1.f);  // sky color : glm::vec3(1.f)
+        radiance += throughput * glm::vec3(0.f);  // sky color : glm::vec3(1.f)
         return radiance;
       }
     }

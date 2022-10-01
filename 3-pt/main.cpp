@@ -25,11 +25,11 @@ int main()
   time(&t_begin);
 
   Scene scene;
-  scene.loadObj("./data/head/head.OBJ");
+  scene.loadObj("./data/head_with_light/head_with_light.obj");
 
   const int width = 512;
   const int height = 512;
-  const int n_samples = 100;
+  const int n_samples = 1000;
   spdlog::info("[Main] Sample: {}", n_samples);
 
   Image image(width, height);
