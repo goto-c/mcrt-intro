@@ -17,29 +17,27 @@ class Intersector
 class LinearIntersector : public Intersector
 {
  public:
-  LinearIntersector(Primitive* primitives, int n_primitives)
+  LinearIntersector(const Primitive* primitives, uint32_t n_primitives)
       : m_primitives(primitives), m_n_primitives(n_primitives)
   {
   }
 
   bool intersect(const Ray& ray, IntersectInfo& info) const override
   {
-    // TODO: implement this
-    IntersectInfo tmp;
-    float tmax = ray.tmax;
-    bool is_hit = false;
-
-    for (int i = 0; i < m_n_primitives; i++) {
-      if (m_primitives[i].intersect(ray, tmp) && tmp.t < tmax) {
-        info = tmp;
-        tmax = tmp.t;
-        is_hit = true;
+    bool hit = false;
+    float ray_tmax = ray.tmax;
+    for (uint32_t i = 0; i < m_n_primitives; ++i) {
+      const Primitive& primitive = m_primitives[i];
+      if (primitive.intersect(ray, info)) {
+        ray.tmax = info.t;
+        hit = true;
       }
     }
-    return is_hit;
+    ray.tmax = ray_tmax;
+    return hit;
   }
 
  private:
-  Primitive* m_primitives;  // array of primitive pointers
-  int m_n_primitives;
+  const Primitive* m_primitives;  // array of primitives
+  uint32_t m_n_primitives;        // number of primitives
 };

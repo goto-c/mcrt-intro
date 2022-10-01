@@ -1,11 +1,6 @@
-#include <bits/types/time_t.h>
-#include <time.h>
-
-#include <memory>
-
+#include "bsdf.h"
 #include "camera.h"
 #include "core.h"
-#include "glm/fwd.hpp"
 #include "image.h"
 #include "integrator.h"
 #include "intersector.h"
@@ -13,35 +8,29 @@
 #include "primitive.h"
 #include "sampler.h"
 #include "scene.h"
-#include "spdlog/common.h"
-#include "spdlog/spdlog.h"
-#include "tiny_obj_loader.h"
-
-#define RAY_EPS 0.01f
 
 int main()
 {
-  time_t t_begin;
-  time(&t_begin);
-
-  Scene scene;
-  scene.loadObj("./data/head_with_light/head_with_light.obj");
-
   const int width = 512;
   const int height = 512;
-  const int n_samples = 1000;
-  spdlog::info("[Main] Sample: {}", n_samples);
+  const int n_samples = 100;
+  const int max_depth = 10;
 
   Image image(width, height);
-  Camera camera(glm::vec3(0, 0, 0.5), glm::vec3(0, 0, -1));
+  ThinLensCamera camera(glm::vec3(0, 1, 5), glm::vec3(0, 0, -1), 0.33f * M_PIf,
+                        32.0f, 5.0f);
+
+  Scene scene;
+  scene.loadObj("CornellBox.obj");
 
   LinearIntersector intersector(scene.m_primitives.data(),
                                 scene.m_primitives.size());
 
-  Sampler sampler(12);
-  PathTracing integrator(10);
+  IBL sky("PaperMill_E_3k.hdr");
 
-  glm::vec3 sun_direction = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
+  Sampler sampler(12);
+
+  PathTracing integrator(max_depth);
 
 #pragma omp parallel for collapse(2)
   for (int j = 0; j < height; ++j) {
@@ -53,23 +42,20 @@ int main()
         ndc.y *= -1.0f;
 
         // sample ray from camera
-        const Ray ray = camera.sampleRay(ndc);
+        const Ray ray = camera.sampleRay(ndc, sampler.next_2d());
 
-        glm::vec3 color = integrator.integrate(ray, &intersector, sampler);
-        image.addPixel(i, j, color);
+        // evaluate incoming radiance
+        const glm::vec3 radiance =
+            integrator.integrate(ray, &intersector, &sky, sampler);
+
+        image.addPixel(i, j, radiance);
       }
     }
   }
-
   image.divide(n_samples);
 
   image.post_process();
   write_png("output.png", width, height, image.getConstPtr());
-
-  time_t t_end;
-  time(&t_end);
-
-  spdlog::info("[Main] Time: {} [s]", t_end - t_begin);
 
   return 0;
 }

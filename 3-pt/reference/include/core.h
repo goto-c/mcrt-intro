@@ -54,6 +54,14 @@ inline glm::vec3 spherical_to_cartesian(float phi, float theta)
                    glm::sin(phi) * sin_theta);
 }
 
+// convert cartesian coordinate to spherical coordinate
+inline void cartesian_to_spherical(const glm::vec3& v, float& phi, float& theta)
+{
+  theta = glm::acos(glm::clamp(v.y, -1.0f, 1.0f));
+  phi = glm::atan(v.z, v.x);
+  if (phi < 0.0f) phi += 2.0f * M_PIf;
+}
+
 // Duff, T., Burgess, J., Christensen, P., Hery, C., Kensler, A., Liani, M., &
 // Villemin, R. (2017). Building an orthonormal basis, revisited. JCGT, 6(1).
 inline void orthonormal_basis(const glm::vec3& normal, glm::vec3& tangent,
@@ -67,12 +75,22 @@ inline void orthonormal_basis(const glm::vec3& normal, glm::vec3& tangent,
   bitangent = glm::vec3(b, sign + normal.y * normal.y * a, -normal.y);
 }
 
+// convert given vector from world to tangent space
+// v: world space vector
+// t: tangent
+// n: normal
+// b: bitangent
 inline glm::vec3 world_to_local(const glm::vec3& v, const glm::vec3& t,
                                 const glm::vec3& n, const glm::vec3& b)
 {
   return glm::vec3(glm::dot(v, t), glm::dot(v, n), glm::dot(v, b));
 }
 
+// convert given vector from local to world space
+// v: tangent space vector
+// t: tangent
+// n: normal
+// b: bitangent
 inline glm::vec3 local_to_world(const glm::vec3& v, const glm::vec3& t,
                                 const glm::vec3& n, const glm::vec3& b)
 {

@@ -5,25 +5,27 @@
 #include "core.h"
 #include "intersector.h"
 #include "sampler.h"
+#include "sky.h"
 
 #define RAY_EPS 0.01f
 
 class Integrator
 {
  public:
-  // compute incoming radiance
-  // ray: primary ray
+  // compute incoming radiance by numerically computing rendering equation
+  // ray: ray generated from camera
   virtual glm::vec3 integrate(const Ray& ray, const Intersector* intersector,
-                              Sampler& sampler) const = 0;
+                              const Sky* sky, Sampler& sampler) const = 0;
 };
 
+// pure path tracing integrator
 class PathTracing : public Integrator
 {
  public:
   PathTracing(uint32_t max_depth) : m_max_depth(max_depth) {}
 
   glm::vec3 integrate(const Ray& ray_in, const Intersector* intersector,
-                      Sampler& sampler) const override
+                      const Sky* sky, Sampler& sampler) const override
   {
     Ray ray = ray_in;
     glm::vec3 radiance(0.0f);
@@ -37,15 +39,15 @@ class PathTracing : public Integrator
       throughput /= russian_roulette_prob;
 
       IntersectInfo info;
-      // ray goes to sky
       if (!intersector->intersect(ray, info)) {
+        // ray goes to sky
         // evaluate environment light
-        radiance += throughput * glm::vec3(1.0f);
+        radiance += throughput * sky->evaluate(ray);
         break;
       }
 
-      // ray hits area light
       if (info.primitive->has_emission()) {
+        // ray hits area light
         // add Le
         radiance += throughput * info.primitive->material->ke;
         break;
@@ -77,5 +79,5 @@ class PathTracing : public Integrator
   }
 
  private:
-  uint32_t m_max_depth;
+  uint32_t m_max_depth;  // maximum ray depth
 };

@@ -1,15 +1,17 @@
 #pragma once
 #include <cstdio>
+#include <stdexcept>
 
 #include "core.h"
 #include "glm/glm.hpp"
+#include "sampler.h"
 #include "spdlog/spdlog.h"
 
 class Camera
 {
  public:
-  Camera(const glm::vec3& origin_, const glm::vec3& forward_)
-      : m_origin(origin_), m_forward(forward_)
+  Camera(const glm::vec3& origin, const glm::vec3& forward)
+      : m_origin(origin), m_forward(forward)
 
   {
     // calculate right, up direction from forward direction
@@ -25,20 +27,66 @@ class Camera
     spdlog::info("[Camera] Up: ({}, {}, {})", m_up.x, m_up.y, m_up.z);
   }
 
-  // sample ray from pinhole camera
+  // sample ray from camera
   // ndc(normalized device coordinate): [-1, 1] x [-1, 1]
-  Ray sampleRay(const glm::vec2& ndc) const
-  {
-    Ray ret;
-    ret.origin = m_origin;
-    ret.direction =
-        glm::normalize(ndc.x * m_right + ndc.y * m_up + m_forward * 1.5f);
-    return ret;
-  }
+  // u: [0, 1] x [0, 1] random number
+  virtual Ray sampleRay(const glm::vec2& ndc, const glm::vec2& u) const = 0;
 
- private:
+ protected:
   glm::vec3 m_origin;   // camera position
   glm::vec3 m_forward;  // camera forward direction
   glm::vec3 m_right;    // camera right direction
   glm::vec3 m_up;       // camera up direction
+};
+
+class PinholeCamera : public Camera
+{
+ public:
+  PinholeCamera(const glm::vec3& origin, const glm::vec3& forward, float fov)
+      : Camera(origin, forward)
+  {
+    m_focal_length = 1.0f / glm::tan(0.5f * fov);
+  }
+
+  Ray sampleRay(const glm::vec2& ndc, const glm::vec2& u) const override
+  {
+    Ray ret;
+    ret.origin = m_origin;
+    ret.direction = glm::normalize(ndc.x * m_right + ndc.y * m_up +
+                                   m_focal_length * m_forward);
+    return ret;
+  }
+
+ private:
+  float m_focal_length;  // distance from sensor to pinhole
+};
+
+class ThinLensCamera : public Camera
+{
+ public:
+  ThinLensCamera(const glm::vec3& origin, const glm::vec3& forward, float fov,
+                 float fnumber, float focus_distance)
+      : Camera(origin, forward)
+  {
+    m_focal_length = 1.0f / glm::tan(0.5f * fov);
+    m_lens_radius = 2.0f * m_focal_length / fnumber;
+
+    m_b = focus_distance;
+    m_a = 1.0f / (1.0f + m_focal_length - 1.0f / m_b);
+
+    spdlog::info("[ThinLensCamera] focal length: {}", m_focal_length);
+    spdlog::info("[ThinLensCamera] lens radius: {}", m_lens_radius);
+  }
+
+  Ray sampleRay(const glm::vec2& ndc, const glm::vec2& u) const override
+  {
+    // TODO: implemen this
+    throw std::runtime_error("not implemented");
+  }
+
+ private:
+  float m_lens_radius;   // lens radius
+  float m_focal_length;  // distance from sensor to lens
+  float m_a;             // lens equation(1/a + 1/b = 1/f) a
+  float m_b;             // lens equation b
 };

@@ -17,17 +17,16 @@ int main()
   const int max_depth = 10;
 
   Image image(width, height);
-  ThinLensCamera camera(glm::vec3(0, 1, 5), glm::vec3(0, 0, -1), 0.33f * M_PIf,
-                        32.0f, 5.0f);
+  PinholeCamera camera(glm::vec3(0, 0, 0.5), glm::vec3(0, 0, -1),
+                       0.33f * M_PIf);
 
   Scene scene;
-  scene.loadObj("CornellBox.obj");
+  scene.loadObj("./head_with_light/head_with_light.obj");
 
-  LinearIntersector intersector(scene.m_primitives.data(),
-                                scene.m_primitives.size());
+  BVH intersector(scene.m_primitives.data(), scene.m_primitives.size());
+  intersector.buildBVH();
 
-  // UniformSky sky(glm::vec3(1.0f));
-  IBL sky("PaperMill_E_3k.hdr");
+  UniformSky sky(glm::vec3(0.0f));
 
   Sampler sampler(12);
 
