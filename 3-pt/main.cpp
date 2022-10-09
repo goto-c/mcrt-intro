@@ -1,3 +1,5 @@
+#include <time.h>
+
 #include "bsdf.h"
 #include "camera.h"
 #include "core.h"
@@ -11,6 +13,9 @@
 
 int main()
 {
+  time_t t_begin;
+  time(&t_begin);
+
   const int width = 512;
   const int height = 512;
   const int n_samples = 100;
@@ -56,6 +61,11 @@ int main()
 
   image.post_process();
   write_png("output.png", width, height, image.getConstPtr());
+
+  time_t t_end;
+  time(&t_end);
+
+  spdlog::info("[Main] Time: {} [s]", t_end - t_begin);
 
   return 0;
 }
